@@ -1,0 +1,13 @@
+{
+  "name": "chrome-perf-monitor",
+  "version": "1.0.0",
+  "description": "Runtime performance monitoring for Chrome Extensions - service worker wake time, message latency, storage throughput",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": ["chrome-extension", "performance", "monitoring", "metrics"],
+  "author": "theluckystrike",
+  "license": "MIT"
+}
