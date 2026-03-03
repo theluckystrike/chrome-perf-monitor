@@ -1,13 +1,31 @@
-# chrome-perf-monitor — Runtime Performance Monitoring
-> **Built by [Zovo](https://zovo.one)** | `npm i chrome-perf-monitor`
+# chrome-perf-monitor
 
-Benchmark storage read/write, message latency, time any operation, and track historical averages.
+Monitor page performance in Chrome extensions.
 
-```typescript
-import { PerfMonitor } from 'chrome-perf-monitor';
-const perf = new PerfMonitor();
-const metrics = await perf.runBenchmark();
-const { result, durationMs } = await perf.time('API call', () => fetch(url));
-const avgs = perf.getAverages();
+## Overview
+
+chrome-perf-monitor provides utilities to measure and track page performance metrics.
+
+## Installation
+
+```bash
+npm install chrome-perf-monitor
 ```
-MIT License
+
+## Usage
+
+```javascript
+import { PerfMonitor } from 'chrome-perf-monitor';
+
+const metrics = await PerfMonitor.getMetrics();
+console.log(metrics.FCP, metrics.LCP);
+```
+
+## API
+
+- `getMetrics()` - Get performance metrics
+- `on('metric', callback)` - Listen for metric updates
+
+## License
+
+MIT
