@@ -100,4 +100,4 @@ MIT - [Zovo](https://zovo.one)
 
 ---
 
-*Built by developers, for developers. No compromises on privacy.*
+Built by [Zovo](https://zovo.one)
