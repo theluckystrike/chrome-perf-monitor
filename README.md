@@ -1,103 +1,140 @@
 # chrome-perf-monitor
 
-[![npm version](https://img.shields.io/npm/v/chrome-perf-monitor)](https://npmjs.com/package/chrome-perf-monitor)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Chrome Web Extension](https://img.shields.io/badge/Chrome-Web%20Extension-orange.svg)](https://developer.chrome.com/docs/extensions/)
-[![CI Status](https://github.com/theluckystrike/chrome-perf-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/theluckystrike/chrome-perf-monitor/actions)
-[![Discord](https://img.shields.io/badge/Discord-Zovo-blueviolet.svg?logo=discord)](https://discord.gg/zovo)
-[![Website](https://img.shields.io/badge/Website-zovo.one-blue)](https://zovo.one)
-[![GitHub Stars](https://img.shields.io/github/stars/theluckystrike/chrome-perf-monitor?style=social)](https://github.com/theluckystrike/chrome-perf-monitor)
+Runtime performance monitoring for Chrome extensions. Benchmarks storage throughput, message latency, and service worker wake time in MV3 environments.
 
-> Monitor page performance in Chrome extensions.
+INSTALL
 
-**chrome-perf-monitor** provides utilities to measure and track page performance metrics. Part of the Zovo Chrome extension utilities.
-
-Part of the [Zovo](https://zovo.one) developer tools family.
-
-## Overview
-
-chrome-perf-monitor provides utilities to measure and track page performance metrics including FCP, LCP, FID, CLS, and more.
-
-## Features
-
-- ✅ **Performance Metrics** - Track FCP, LCP, FID, CLS
-- ✅ **Real-time Monitoring** - Listen for metric updates
-- ✅ **TypeScript Support** - Full type definitions included
-- ✅ **MV3 Compatible** - Works with Manifest V3 extensions
-
-## Installation
-
-```bash
+```
 npm install chrome-perf-monitor
 ```
 
-## Usage
+QUICK START
 
-```javascript
+```typescript
 import { PerfMonitor } from 'chrome-perf-monitor';
 
-const metrics = await PerfMonitor.getMetrics();
-console.log(metrics.FCP, metrics.LCP);
+const monitor = new PerfMonitor();
+
+// run the full benchmark suite
+const metrics = await monitor.runBenchmark();
+console.log(metrics.storageReadMs);
+console.log(metrics.storageWriteMs);
+console.log(metrics.messageLatencyMs);
+console.log(metrics.wakeTimeMs);
 ```
 
-## API
+API
 
-- `getMetrics()` - Get performance metrics
-- `on('metric', callback)` - Listen for metric updates
+PerfMonitor class
 
-## Contributing
+Constructor takes an optional maxHistory parameter (defaults to 100) that controls how many benchmark snapshots are retained in memory.
 
-Contributions are welcome! Please follow these steps:
+```typescript
+const monitor = new PerfMonitor(50);
+```
 
-1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feature/perf-improvement`
-3. **Make** your changes
-4. **Test** your changes: `npm test`
-5. **Commit** your changes: `git commit -m 'Add new feature'`
-6. **Push** to the branch: `git push origin feature/perf-improvement`
-7. **Submit** a Pull Request
+benchmarkStorageRead(key?)
 
-### Development Setup
+Writes a test record to chrome.storage.local, reads it back, removes it, and returns the read duration in milliseconds. The key parameter defaults to `__perf_test__`.
 
-```bash
-# Clone the repository
+```typescript
+const readMs = await monitor.benchmarkStorageRead();
+```
+
+benchmarkStorageWrite(sizeBytes?)
+
+Writes a payload of the given size (default 1024 bytes) to chrome.storage.local, measures the write duration, cleans up, and returns the time in milliseconds.
+
+```typescript
+const writeMs = await monitor.benchmarkStorageWrite(2048);
+```
+
+benchmarkMessageLatency()
+
+Sends a runtime message via chrome.runtime.sendMessage and returns the round-trip time in milliseconds. Failures are silently caught so the benchmark does not throw in contexts without a listener.
+
+```typescript
+const latencyMs = await monitor.benchmarkMessageLatency();
+```
+
+time(label, fn)
+
+Generic timing wrapper for any async operation. Logs the duration to the console and returns both the result and the elapsed time.
+
+```typescript
+const { result, durationMs } = await monitor.time('fetch config', async () => {
+  return await fetch('/config.json').then(r => r.json());
+});
+```
+
+runBenchmark()
+
+Runs all three benchmarks (storage read, storage write, message latency) in sequence, records the service worker wake time from performance.now(), and appends the snapshot to the internal history. Returns a PerfMetrics object.
+
+```typescript
+const metrics = await monitor.runBenchmark();
+```
+
+getHistory()
+
+Returns a copy of all recorded PerfMetrics snapshots.
+
+```typescript
+const history = monitor.getHistory();
+```
+
+getAverages()
+
+Computes the arithmetic mean of each metric across all recorded snapshots. Returns null if no benchmarks have been run yet.
+
+```typescript
+const avg = monitor.getAverages();
+if (avg) {
+  console.log('avg read', avg.storageReadMs);
+}
+```
+
+save()
+
+Persists the current metrics history to chrome.storage.local under the key `__perf_metrics__`.
+
+```typescript
+await monitor.save();
+```
+
+PerfMetrics type
+
+```typescript
+interface PerfMetrics {
+  storageReadMs: number;
+  storageWriteMs: number;
+  messageLatencyMs: number;
+  wakeTimeMs: number;
+  timestamp: number;
+}
+```
+
+REQUIREMENTS
+
+- Chrome extension environment with access to chrome.storage.local and chrome.runtime
+- Manifest V3 compatible
+- TypeScript 5.x
+
+BUILD FROM SOURCE
+
+```
 git clone https://github.com/theluckystrike/chrome-perf-monitor.git
 cd chrome-perf-monitor
-
-# Install dependencies
 npm install
-
-# Run tests
-npm test
-
-# Build
 npm run build
 ```
 
-## Built by Zovo
+Output lands in the dist/ directory.
 
-Part of the [Zovo](https://zovo.one) developer tools family — privacy-first Chrome extensions built by developers, for developers.
+LICENSE
 
-## See Also
-
-### Related Zovo Repositories
-
-- [zovo-extension-template](https://github.com/theluckystrike/zovo-extension-template) - Boilerplate for building privacy-first Chrome extensions
-- [zovo-types-webext](https://github.com/theluckystrike/zovo-types-webext) - Comprehensive TypeScript type definitions for browser extensions
-- [chrome-network-monitor](https://github.com/theluckystrike/chrome-network-monitor) - Network request monitoring
-
-### Zovo Chrome Extensions
-
-- [Zovo Tab Manager](https://chrome.google.com/webstore/detail/zovo-tab-manager) - Manage tabs efficiently
-- [Zovo Focus](https://chrome.google.com/webstore/detail/zovo-focus) - Block distractions
-
-Visit [zovo.one](https://zovo.one) for more information.
-
-## License
-
-MIT - [Zovo](https://zovo.one)
+MIT. See LICENSE file for details.
 
 ---
 
-Built by [Zovo](https://zovo.one)
+A zovo.one project. Built by theluckystrike.
